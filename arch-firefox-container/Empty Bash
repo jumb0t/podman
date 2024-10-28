@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Имя контейнера
+CONTAINER_NAME=firefox
+
+# Рабочая директория для всех файлов
+WORK_DIR=/home/user/firefox_podman
+
+# Создание рабочей директории, если её нет
+mkdir -p $WORK_DIR
+
+# Проверка на наличие установленных пакетов
+if ! command -v podman &> /dev/null; then
+    echo "Podman не установлен. Установите Podman перед запуском этого скрипта."
+    exit 1
+fi
+
+# Создание контейнера с параметрами
+podman create --name $CONTAINER_NAME \
+    --cap-drop=ALL \
+    --network host \
+    --ipc=none \
+    --pids-limit=10 \
+    --memory=2g \
+    --cpu-shares=512 \
+    --tmpfs /tmp:size=512M \
+    --device /dev/dri \
+    --device /dev/snd \
+    --env WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+    --env XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+    --volume /run/user/$(id -u)/wayland-0:/run/user/$(id -u)/wayland-0:rw \
+    --volume $WORK_DIR:/home/firefox:rw \
+    --workdir /home/firefox \
+    --userns=keep-id \
+    docker.io/library/archlinux:latest
+
+# Запуск контейнера
+#podman start $CONTAINER_NAME
+
+# Установка Firefox в контейнере и запуск
+#podman exec -it $CONTAINER_NAME bash -c "pacman -Sy --noconfirm firefox && GDK_BACKEND=wayland firefox"
